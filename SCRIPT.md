@@ -9,7 +9,7 @@ Camera records you to the SD card; OBS records the screen. Everything happens li
 ## Setup (before pressing record)
 
 1. `.env` has `SEARCHAPI_API_KEY`, `RESEND_API_KEY` and `ALERT_EMAIL_TO`.
-2. Log in to searchapi.io and open the **Playground** (Dashboard → Playground). Set the engine to **Google Shopping**, `q` = `Logitech MX Master 3S graphite`, `gl` = `us`. Do not run it yet. Open a second Playground tab with the engine set to **Google Product** and `gl` = `us`; the `product_token` field stays empty until scene 2. Rehearse this once before recording: run Shopping, copy a `product_token` from the JSON, run Product. Each run uses one request on your account.
+2. Open Postman with SearchApi’s official collection (fork it from https://www.postman.com/searchapiofficial/searchapi-official-postman-collection into your workspace). Put your key in a collection variable `api_key` of type **secret**, so it shows as dots on screen. Open two request tabs: **Google Shopping** with `q` = `Logitech MX Master 3S graphite`, `gl` = `us`, `hl` = `en`; and **Google Product** with `gl` = `us`, `hl` = `en` and `product_token` empty until scene 2. Response view on **Pretty / JSON**. Rehearse once before recording: send Shopping, copy a `product_token`, send Product. Each send uses one request on your account.
 3. Open the docs for Google Shopping and Google Product in two more tabs.
 4. Terminal, off camera, before recording: `npm run demo:fresh`. Then open http://127.0.0.1:5194/ (empty watchlist, small **Demo** tag in the header) and your inbox. Close the terminal window and everything else.
 5. Editor open on `examples/requests.sh`, `store.mjs`, `scheduler.mjs`, `alerts.mjs` and `.env.example`. Never the real `.env`. The editor is only shown in scene 10.
@@ -19,7 +19,7 @@ Expected on the day (checked October 6): the Shopping request returns about 40 r
 
 ## 0. Opening (45 seconds, on camera)
 
-**Do:** Camera only. Screen shows the Playground tab, not yet run.
+**Do:** Camera only. Screen shows Postman on the Google Shopping request, not yet sent.
 
 **Say**
 
@@ -32,14 +32,14 @@ Expected on the day (checked October 6): the Shopping request returns about 40 r
 ## 1. Request one: find the product (1 minute 30 seconds)
 
 **Do**
-1. In the Playground tab (Google Shopping), point at the three parameters: `engine`, `q`, `gl`. Click **Run** (or Search).
-2. On the right, point at the request URL the Playground shows, then at the JSON. Scroll to `shopping_results`.
-3. Find the entry **“Logitech MX Master 3S for Business Mouse”**. Point at `title`, `price`, `seller`, `product_token`. Select the token and copy it.
-4. If the Playground shows the HTML preview of the Google page next to the JSON, point at it: “same page, as data”. Then switch to the Google Shopping docs tab for five seconds and point at the parameters list.
+1. In Postman, on the **Google Shopping** request, point at the URL and the **Params** tab: `engine`, `q`, `gl`, `hl`, and `api_key` as a masked variable. Click **Send**.
+2. In the response, point at the status and time, then scroll to `shopping_results`.
+3. Use the response search (⌘F) for “for Business”. Point at `title`, `price`, `seller`, `product_token`. Select the token value and copy it.
+4. Switch to the Google Shopping docs tab for five seconds and point at the parameters list. Back to Postman.
 
 **Say**
 
-“This is SearchApi’s Playground, and this is a Google Shopping search: one GET request with the engine, my query and the country. I’m asking for the Logitech MX Master 3S, graphite, in the US. Run.
+“This is SearchApi’s Postman collection, and this is a Google Shopping search: one GET request with the engine, my query, the country and my key. I’m asking for the Logitech MX Master 3S, graphite, in the US. Send.
 
 “What comes back is the Google Shopping results page as JSON: about forty products, each with a title, the headline price, the seller Google shows on the card, and this `product_token`. The price here is just a headline; some entries don’t even have one. The token is what matters: it identifies the product so I can ask for its offers. I’ll copy it.
 
@@ -48,8 +48,8 @@ Expected on the day (checked October 6): the Shopping request returns about 40 r
 ## 2. Request two: every store’s offer (1 minute 30 seconds)
 
 **Do**
-1. Switch to the second Playground tab (Google Product). Paste the token into `product_token`. Point at `engine` and `gl`. Click **Run**.
-2. In the JSON, scroll to `offers`. Read the four entries: `merchant.name`, `price`, `total_price`, `delivery_price`, `link`.
+1. Switch to the **Google Product** request tab. Paste the token into `product_token`. Point at `engine`. Click **Send**.
+2. In the response, scroll to `offers`. Read the four entries: `merchant.name`, `price`, `total_price`, `delivery_price`, `link`.
 3. Scroll up to `typical_prices` and `product`. Point at them.
 4. Switch to the Google Product docs tab for five seconds. Back.
 
@@ -59,7 +59,7 @@ Expected on the day (checked October 6): the Shopping request returns about 40 r
 
 “That’s the whole pattern. Shopping to find the product and get a token, Product to get the offers. Two requests, and you have what a human would get from opening ten tabs. Save the result with a date, run it again tomorrow, and you have a price history. Everything from here is built on exactly these two calls.”
 
-## 3. What you can do with it (45 seconds, on camera or over the Playground JSON)
+## 3. What you can do with it (45 seconds, on camera or over the Postman response)
 
 **Say**
 
@@ -77,7 +77,7 @@ Expected on the day (checked October 6): the Shopping request returns about 40 r
 
 **Do**
 1. Switch to the app tab (port 5194). Type `Logitech MX Master 3S graphite` in **Product name or model**. Click **Search · 1 request**.
-2. Point at the cards: “the same results you just saw as JSON in the Playground”. Click **Inspect offers · 1 request** on **“Logitech MX Master 3S for Business Mouse”**.
+2. Point at the cards: “the same results you just saw as JSON in Postman”. Click **Inspect offers · 1 request** on **“Logitech MX Master 3S for Business Mouse”**.
 3. In the offers table, point at the five stores. Point at the **Lenovo** line, “Brown Box”.
 4. Tick **Target, Best Buy, CDW and Staples**. Leave **Lenovo** unticked.
 
@@ -151,7 +151,7 @@ Expected on the day (checked October 6): the Shopping request returns about 40 r
 
 **Say**
 
-“If you want to build your own, start here: this file is the two requests you saw in the Playground, as curl, ready to run. The tool is the same thing in JavaScript: `store.mjs` calls Shopping and then Product, normalizes the offers and saves each observation; `scheduler.mjs` repeats it on the interval; `alerts.mjs` compares two observations and writes the email. SearchApi gives you the records; everything else is your rules. Prices are kept in cents, each market in its own currency, and the product token stays on the server.”
+“If you want to build your own, start here: this file is the two requests you saw in Postman, as curl, ready to run. The tool is the same thing in JavaScript: `store.mjs` calls Shopping and then Product, normalizes the offers and saves each observation; `scheduler.mjs` repeats it on the interval; `alerts.mjs` compares two observations and writes the email. SearchApi gives you the records; everything else is your rules. Prices are kept in cents, each market in its own currency, and the product token stays on the server.”
 
 ## 11. Closing (30 seconds, on camera)
 
@@ -165,9 +165,9 @@ Expected on the day (checked October 6): the Shopping request returns about 40 r
 
 ## If something differs on the day
 
-- **The “for Business” entry is hard to find in the Playground JSON:** use the browser’s find (⌘F) for “for Business”. If it is gone, use **“Logitech MX Master 3S Wireless Mouse”** in both the Playground and the app, and adapt the store names.
+- **The “for Business” entry is hard to find in the response:** Postman’s response search (⌘F) for “for Business”. If it is gone, use **“Logitech MX Master 3S Wireless Mouse”** in both Postman and the app, and adapt the store names.
 - **Prices moved:** set the target about 5% below the lowest. The fourth simulated day lands just under it.
-- **The Playground run fails or hangs:** say so, switch to the docs tab (each doc has a full example response) and continue; the app runs the same requests in scene 4.
+- **A Postman send fails:** read the status aloud, switch to the docs tab (each doc has a full example response) and continue; the app runs the same requests in scene 4.
 - **Test email does not arrive within a minute:** keep going; the simulated alerts go to the same address, so show them in scene 8.
 - **A click fails in the app:** the message at the top says why. Reload and continue; nothing is lost.
 
@@ -183,7 +183,7 @@ Captions come from the final audio, not from this script. Chapter times are set 
 
 ## Revision notes (October 6, after Sam’s review)
 
-- **API first.** New scenes 1 and 2 run the two SearchApi requests live in the SearchApi Playground (no terminal), with the JSON on screen, before the tool appears. New scene 3 says what you can do with that data (compare, monitor, alert) in a tool-agnostic way.
+- **API first.** New scenes 1 and 2 send the two SearchApi requests live from SearchApi’s official Postman collection (no terminal), with the JSON on screen, before the tool appears. New scene 3 says what you can do with that data (compare, monitor, alert) in a tool-agnostic way.
 - **The tool is now “one way to do it”.** Old scenes 1 to 3 became scenes 4 and 5 and were shortened; Settings and email (scenes 6 and 7) were trimmed; the history scene was cut to 45 seconds.
 - **Build your own.** `examples/requests.sh` was added to the repository with the two curls, and scene 10 points to it before showing the tool’s code.
 - **Opening and closing** now lead with the two requests, not the app.
