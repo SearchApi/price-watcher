@@ -9,32 +9,17 @@ Camera records you to the SD card; OBS records the screen. Everything happens li
 ## Setup (before pressing record)
 
 1. `.env` has `SEARCHAPI_API_KEY`, `RESEND_API_KEY` and `ALERT_EMAIL_TO`.
-2. Terminal 1, off camera: `cd ~/GabsOS/searchapi/price-watch && export $(grep SEARCHAPI_API_KEY .env | xargs)`. Then `clear`. The key is now in the environment and never appears on screen. Have these two commands ready to paste (they are also in `examples/requests.sh`):
+2. Log in to searchapi.io and open the **Playground** (Dashboard → Playground). Set the engine to **Google Shopping**, `q` = `Logitech MX Master 3S graphite`, `gl` = `us`. Do not run it yet. Open a second Playground tab with the engine set to **Google Product** and `gl` = `us`; the `product_token` field stays empty until scene 2. Rehearse this once before recording: run Shopping, copy a `product_token` from the JSON, run Product. Each run uses one request on your account.
+3. Open the docs for Google Shopping and Google Product in two more tabs.
+4. Terminal, off camera, before recording: `npm run demo:fresh`. Then open http://127.0.0.1:5194/ (empty watchlist, small **Demo** tag in the header) and your inbox. Close the terminal window and everything else.
+5. Editor open on `examples/requests.sh`, `store.mjs`, `scheduler.mjs`, `alerts.mjs` and `.env.example`. Never the real `.env`. The editor is only shown in scene 10.
+6. Rehearsed already? `npm run demo:fresh` again before the real take.
 
-```sh
-curl -s -G https://www.searchapi.io/api/v1/search -H "Authorization: Bearer $SEARCHAPI_API_KEY" \
-  --data-urlencode engine=google_shopping --data-urlencode "q=Logitech MX Master 3S graphite" --data-urlencode gl=us \
-  | jq '.shopping_results[:5] | map({title, price, seller, product_token: (.product_token[:12] + "…")})'
-```
-
-```sh
-TOKEN=$(curl -s -G https://www.searchapi.io/api/v1/search -H "Authorization: Bearer $SEARCHAPI_API_KEY" \
-  --data-urlencode engine=google_shopping --data-urlencode "q=Logitech MX Master 3S graphite" --data-urlencode gl=us \
-  | jq -r '[.shopping_results[] | select(.title | test("for Business"))][0].product_token')
-curl -s -G https://www.searchapi.io/api/v1/search -H "Authorization: Bearer $SEARCHAPI_API_KEY" \
-  --data-urlencode engine=google_product --data-urlencode "product_token=$TOKEN" --data-urlencode gl=us \
-  | jq '{product: .product.title, typical_prices, offers: [.offers[] | {seller: .merchant.name, price, total_price, delivery: .delivery_price}]}'
-```
-
-3. Terminal 2: `npm run demo:fresh`. Open http://127.0.0.1:5194/ in one tab (empty watchlist, small **Demo** tag in the header), the SearchApi docs for Google Shopping and Google Product in two tabs, and your inbox in another. Close everything else.
-4. Editor open on `examples/requests.sh`, `store.mjs`, `scheduler.mjs`, `alerts.mjs` and `.env.example`. Never the real `.env`.
-5. Rehearsed already? `npm run demo:fresh` again before the real take.
-
-Expected on the day (checked October 6): the Shopping request returns about 40 results; the “for Business” card shows Best Buy $109.99; the Product request returns **Best Buy, Target, CDW at $109.99 and Staples at $119.99**, each with delivery and a store link. In the app, the same product also shows a fifth listing, **Lenovo “Brown Box” $109.99**. Prices move; use what you see. The only number to adapt is the target, a little below the lowest price.
+Expected on the day (checked October 6): the Shopping request returns about 40 results; the “for Business” entry shows Best Buy $109.99; the Product request returns **Best Buy, Target, CDW at $109.99 and Staples at $119.99**, each with delivery and a store link. In the app, the same product also shows a fifth listing, **Lenovo “Brown Box” $109.99**. Prices move; use what you see. The only number to adapt is the target, a little below the lowest price.
 
 ## 0. Opening (45 seconds, on camera)
 
-**Do:** Camera only. Screen shows the empty terminal.
+**Do:** Camera only. Screen shows the Playground tab, not yet run.
 
 **Say**
 
@@ -47,34 +32,34 @@ Expected on the day (checked October 6): the Shopping request returns about 40 r
 ## 1. Request one: find the product (1 minute 30 seconds)
 
 **Do**
-1. Paste the first command. Press Enter. Wait for the JSON.
-2. Point at `engine=google_shopping`, `q`, `gl=us` in the command.
-3. In the output, point at `title`, `price`, `seller` and `product_token` of the “for Business” card.
-4. Switch to the Google Shopping docs tab for five seconds; point at the parameters list. Back to the terminal.
+1. In the Playground tab (Google Shopping), point at the three parameters: `engine`, `q`, `gl`. Click **Run** (or Search).
+2. On the right, point at the request URL the Playground shows, then at the JSON. Scroll to `shopping_results`.
+3. Find the entry **“Logitech MX Master 3S for Business Mouse”**. Point at `title`, `price`, `seller`, `product_token`. Select the token and copy it.
+4. If the Playground shows the HTML preview of the Google page next to the JSON, point at it: “same page, as data”. Then switch to the Google Shopping docs tab for five seconds and point at the parameters list.
 
 **Say**
 
-“This is a Google Shopping search through SearchApi. One GET request: the engine, my query, and the country. I’m asking for the Logitech MX Master 3S, graphite, in the US.
+“This is SearchApi’s Playground, and this is a Google Shopping search: one GET request with the engine, my query and the country. I’m asking for the Logitech MX Master 3S, graphite, in the US. Run.
 
-“What comes back is the result page as JSON: about forty products, each with a title, the headline price, the seller Google shows on the card, and this `product_token`. The price on a card is just a headline; some cards don’t even have one. The token is what matters: it identifies this product so I can ask for its offers.
+“What comes back is the Google Shopping results page as JSON: about forty products, each with a title, the headline price, the seller Google shows on the card, and this `product_token`. The price here is just a headline; some entries don’t even have one. The token is what matters: it identifies the product so I can ask for its offers. I’ll copy it.
 
 “The docs list every parameter: language, device, pagination, sorting, filters. Pick a specific model; a category query gives you a mix.”
 
 ## 2. Request two: every store’s offer (1 minute 30 seconds)
 
 **Do**
-1. Paste the second command. Press Enter.
-2. Point at `engine=google_product` and `product_token`.
-3. In the output, read the four offers: seller, `price`, `total_price`, `delivery`. Point at `typical_prices`.
+1. Switch to the second Playground tab (Google Product). Paste the token into `product_token`. Point at `engine` and `gl`. Click **Run**.
+2. In the JSON, scroll to `offers`. Read the four entries: `merchant.name`, `price`, `total_price`, `delivery_price`, `link`.
+3. Scroll up to `typical_prices` and `product`. Point at them.
 4. Switch to the Google Product docs tab for five seconds. Back.
 
 **Say**
 
-“Second request: Google Product, with the token from the card I chose. This one returns the product itself and its offers: four stores, each with the item price, the total with delivery, the delivery promise and a link to the store page. It also returns Google’s typical price range for this product, the specifications and the reviews, if you want them.
+“Second request: Google Product, with the token from the entry I chose. This one returns the product itself and its offers: four stores, each with the item price, the total with delivery, the delivery promise and a link to the store page. It also returns Google’s typical price range, the specifications and the reviews, if you want them.
 
 “That’s the whole pattern. Shopping to find the product and get a token, Product to get the offers. Two requests, and you have what a human would get from opening ten tabs. Save the result with a date, run it again tomorrow, and you have a price history. Everything from here is built on exactly these two calls.”
 
-## 3. What you can do with it (45 seconds, on camera or over the JSON)
+## 3. What you can do with it (45 seconds, on camera or over the Playground JSON)
 
 **Say**
 
@@ -92,13 +77,13 @@ Expected on the day (checked October 6): the Shopping request returns about 40 r
 
 **Do**
 1. Switch to the app tab (port 5194). Type `Logitech MX Master 3S graphite` in **Product name or model**. Click **Search · 1 request**.
-2. Point at the cards: “the same forty results you just saw as JSON”. Click **Inspect offers · 1 request** on **“Logitech MX Master 3S for Business Mouse”**.
+2. Point at the cards: “the same results you just saw as JSON in the Playground”. Click **Inspect offers · 1 request** on **“Logitech MX Master 3S for Business Mouse”**.
 3. In the offers table, point at the five stores. Point at the **Lenovo** line, “Brown Box”.
 4. Tick **Target, Best Buy, CDW and Staples**. Leave **Lenovo** unticked.
 
 **Say**
 
-“This is Price Watch. Search is request one, the same forty results, now as cards. Inspect is request two, the offers for the card I chose.
+“This is Price Watch. Search is request one, the same results, now as cards. Inspect is request two, the offers for the card I chose.
 
 “Here the app does something the API can’t do for you: five stores came back, and four are the same thing, the MX Master 3S for Business, graphite, new, retail box. This one from Lenovo is a brown box: bulk packaging, different part number. Same mouse, not the same product on sale. If I compare it, my lowest price is wrong. So I leave it out.
 
@@ -166,7 +151,7 @@ Expected on the day (checked October 6): the Shopping request returns about 40 r
 
 **Say**
 
-“If you want to build your own, start here: this file is the two requests from the beginning, as curl. The tool is the same thing in JavaScript: `store.mjs` calls Shopping and then Product, normalizes the offers and saves each observation; `scheduler.mjs` repeats it on the interval; `alerts.mjs` compares two observations and writes the email. SearchApi gives you the records; everything else is your rules. Prices are kept in cents, each market in its own currency, and the product token stays on the server.”
+“If you want to build your own, start here: this file is the two requests you saw in the Playground, as curl, ready to run. The tool is the same thing in JavaScript: `store.mjs` calls Shopping and then Product, normalizes the offers and saves each observation; `scheduler.mjs` repeats it on the interval; `alerts.mjs` compares two observations and writes the email. SearchApi gives you the records; everything else is your rules. Prices are kept in cents, each market in its own currency, and the product token stays on the server.”
 
 ## 11. Closing (30 seconds, on camera)
 
@@ -180,9 +165,9 @@ Expected on the day (checked October 6): the Shopping request returns about 40 r
 
 ## If something differs on the day
 
-- **The “for Business” card is not in the first five of the JSON:** the second command already selects it by title. In the app, find it among the cards; if it is gone, use **“Logitech MX Master 3S Wireless Mouse”** and adapt the store names.
+- **The “for Business” entry is hard to find in the Playground JSON:** use the browser’s find (⌘F) for “for Business”. If it is gone, use **“Logitech MX Master 3S Wireless Mouse”** in both the Playground and the app, and adapt the store names.
 - **Prices moved:** set the target about 5% below the lowest. The fourth simulated day lands just under it.
-- **A curl returns an error:** read the message aloud (rate limit, key) and move on to the app, which runs the same requests.
+- **The Playground run fails or hangs:** say so, switch to the docs tab (each doc has a full example response) and continue; the app runs the same requests in scene 4.
 - **Test email does not arrive within a minute:** keep going; the simulated alerts go to the same address, so show them in scene 8.
 - **A click fails in the app:** the message at the top says why. Reload and continue; nothing is lost.
 
@@ -198,7 +183,7 @@ Captions come from the final audio, not from this script. Chapter times are set 
 
 ## Revision notes (October 6, after Sam’s review)
 
-- **API first.** New scenes 1 and 2 run the two SearchApi requests live in a terminal, with the JSON on screen, before the tool appears. New scene 3 says what you can do with that data (compare, monitor, alert) in a tool-agnostic way.
+- **API first.** New scenes 1 and 2 run the two SearchApi requests live in the SearchApi Playground (no terminal), with the JSON on screen, before the tool appears. New scene 3 says what you can do with that data (compare, monitor, alert) in a tool-agnostic way.
 - **The tool is now “one way to do it”.** Old scenes 1 to 3 became scenes 4 and 5 and were shortened; Settings and email (scenes 6 and 7) were trimmed; the history scene was cut to 45 seconds.
 - **Build your own.** `examples/requests.sh` was added to the repository with the two curls, and scene 10 points to it before showing the tool’s code.
 - **Opening and closing** now lead with the two requests, not the app.
