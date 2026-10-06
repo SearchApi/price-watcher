@@ -38,6 +38,6 @@ test('a far target is not forced: the drop is 5% and prices keep a retail look',
 test('seeding copies the real workspace once, moves history back and leaves the real file alone',async t=>{
   const f=await setup(t,{demo:false}),real=join(f.dir,'state.json'),demo=join(f.dir,'demo.json'),original=await readFile(real,'utf8'),now=Date.parse('2026-10-10T00:00:00Z');
   assert.equal(await seedDemo(real,demo,{now}),true);assert.equal(await readFile(real,'utf8'),original);
-  const d=JSON.parse(await readFile(demo,'utf8'));assert.equal(d.products[0].snapshots.at(-1).capturedAt,'2026-10-06T00:00:00.000Z');assert.equal(d.settings.autoCheck,false);
+  const d=JSON.parse(await readFile(demo,'utf8'));assert.equal(d.products[0].snapshots.at(-1).capturedAt,'2026-10-06T00:00:00.000Z');assert.equal(d.settings.autoCheck,true);
   await writeFile(demo,'{"kept":true}');assert.equal(await seedDemo(real,demo,{now}),false);assert.equal(await readFile(demo,'utf8'),'{"kept":true}');
 });

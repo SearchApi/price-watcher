@@ -18,5 +18,5 @@ TOKEN=$(jq -r '.shopping_results[0].product_token' /tmp/shopping.json)
 curl -s -G "$API" -H "Authorization: Bearer $SEARCHAPI_API_KEY" \
   --data-urlencode "engine=google_product" --data-urlencode "product_token=$TOKEN" \
   --data-urlencode "gl=$GL" --data-urlencode "hl=en" > /tmp/product.json
-jq '{product: .product.title, typical_prices, offers: [.offers[] | {seller: .merchant.name, price, total_price, delivery: .delivery_price, link}]}' /tmp/product.json
+jq '{product: .product.title, typical: {low: .typical_prices.low_price, high: .typical_prices.high_price, popular: .typical_prices.popular_choice}, offers: [.offers[] | {seller: .merchant.name, price, total_price, delivery: .delivery_price, link}]}' /tmp/product.json
 rm -f /tmp/shopping.json /tmp/product.json

@@ -33,7 +33,8 @@ export async function seedDemo(realPath,demoPath,{days=4,now=Date.now(),empty=fa
     p.snapshots=p.snapshots.map(s=>({...s,capturedAt:new Date(Date.parse(s.capturedAt)+shift).toISOString()}));
     p.createdAt=p.snapshots[0].capturedAt;p.notice='';
   }
-  state.settings={...state.settings,autoCheck:false};
+  // The scheduler never runs in demo mode, so Settings can show the real-life default (on, daily) without any request being made.
+  state.settings={...state.settings,autoCheck:true};
   await mkdir(dirname(demoPath),{recursive:true});await writeFile(demoPath,JSON.stringify(state,null,2),{mode:0o600});return true;
 }
 if(process.argv[1]&&resolve(process.argv[1])===import.meta.filename&&process.argv.includes('--reset')){
