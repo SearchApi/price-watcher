@@ -81,6 +81,7 @@ Live validation on September 28, 2026 reached SearchApi but the key then in use 
 - `scheduler.mjs`: automatic checks, backoff and pause when the account is out of searches.
 - `config.mjs`: limits read from the environment.
 - `simulate.mjs`: demo mode (simulated daily checks on a separate copy of the workspace).
+- `examples/requests.sh`: the two SearchApi requests (Google Shopping, then Google Product) as plain curl + jq, to build your own tool from.
 - `alerts.mjs` and `notify.mjs`: what is worth an email, and the Resend sender (replace `notify.mjs` for another provider).
 - `public/`: English interface, responsive styles and favicon. `history-chart.js` builds the price history chart and its table view.
 - `SCRIPT.md`: the demo script, with suggested text and the on-screen flow.
