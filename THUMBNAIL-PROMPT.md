@@ -1,0 +1,7 @@
+# Price Watch thumbnail — September 28, 2026
+
+Method: image generation using the existing series image `public/thumbnails/first-call-v1.png` as a style and approximate likeness reference. That reference is an earlier generated image, not an original portrait. The selected image is `thumbnail.png`, also published locally as `public/thumbnails/price-watch-v1.png`. This is a thumbnail concept, not photographic evidence of prices or market results.
+
+## Generation prompt
+
+Use case: ads-marketing. Create one finished 16:9 YouTube thumbnail concept for Price Watch, an English developer tutorial about comparing competitor prices with SearchApi. Input image is a reference for the same adult male presenter Gabs and the established series style, not an edit target or an original portrait. Preserve approximate recognizable likeness: wavy brown hair, mustache, thick round tortoiseshell glasses. Gabs large on the right, thoughtful and focused, inspecting three clean product-price tags on the left with one magnifying lens; abstract identical computer mouse silhouettes communicate comparing the SAME product. No readable price numbers and no brand logos. Exact large headline on the left: "WATCH THEIR PRICES". No other text. Dark midnight navy backdrop, electric blue and mint accents, polished photographic collage, clean strong hierarchy, generous safe margins, realistic expression, no exaggerated shock, no fake results, no watermark. One individual image, not a grid.

@@ -1,0 +1,5 @@
+// Fictional provider responses for automated and explicitly labelled browser tests.
+export const productTitle='StudioMouse Pro Wireless Mouse — Black';
+export const searchFixture={search_metadata:{id:'fixture_search'},shopping_results:[{product_id:'123456789',product_token:'PRIVATE_TEST_TOKEN',title:productTitle,seller:'Example Electronics',price:'$99.00',extracted_price:99,product_link:'https://example.com/product/mouse'}]};
+export const offer=(seller,price,extra={})=>({title:productTitle,merchant:{name:seller},link:`https://example.com/${seller.replaceAll(' ','-')}/mouse`,price:`$${price.toFixed(2)}`,extracted_price:price,details:['In stock online','Delivery not provided'],...extra});
+export const detailFixture={search_metadata:{id:'fixture_detail'},product:{title:productTitle},offers:[offer('Example Electronics',99),offer('Example Supply',109),offer('Example Outlet',59,{title:'StudioMouse Pro refurbished',condition:'Refurbished'}),offer('Example Accessories',12,{title:'Replacement feet for StudioMouse Pro'})]};
