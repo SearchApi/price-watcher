@@ -33,7 +33,10 @@ export function candidates(data,scope) {
     const productId=String(r.product_id||''),token=text(r.product_token,20000),title=text(r.title);
     if(!title||!token)return [];
     const id=hash(productId+'|'+title+'|'+token); if(seen.has(id))return [];seen.add(id);
-    return [{id,productId,token,title,seller:text(r.seller),price:text(r.price,100),priceCents:moneyAmount(r.extracted_price,r.price,scope.currency),image:safeUrl(r.thumbnail),url:safeUrl(r.product_link||r.link),rating:typeof r.rating==='number'?r.rating:null,condition:text(r.durability||r.condition,100)}];
+    const inst=r.installment&&typeof r.installment==='object'?r.installment:null,price=text(r.price,100);
+    // Google's card may show a monthly installment or an offer count instead of a price; keep that as a hint, never as the item price.
+    const hint=inst?{kind:'installment',text:[text(inst.cost_per_month,40),text(inst.months,40)].filter(Boolean).join(' · ')||price}:!price&&text(r.offers,40)?{kind:'offers',text:text(r.offers,40)}:null;
+    return [{id,productId,token,title,seller:text(r.seller),price:inst?'':price,priceCents:inst?null:moneyAmount(r.extracted_price,r.price,scope.currency),hint,image:safeUrl(r.thumbnail),url:safeUrl(r.product_link||r.link),rating:typeof r.rating==='number'?r.rating:null,condition:text(r.durability||r.condition,100)}];
   });
 }
 export function normalizeOffers(data,scope) {
@@ -61,9 +64,9 @@ export function summarize(product) {
   const older=previous?acceptedOffers(previous):[];
   const changes=offers.flatMap(o=>{const before=older.find(p=>p.key===o.key);return before&&before.priceCents!==o.priceCents?[{seller:o.seller,key:o.key,before:before.priceCents,after:o.priceCents,delta:o.priceCents-before.priceCents}]:[];});
   const comparable=offers.filter(o=>older.some(p=>p.key===o.key)).length;
-  return {lowest,confirmed:offers.length,pending:latest?latest.offers.filter(o=>o.eligible&&!latest.accepted.includes(o.key)).length:0,changes,comparable,gap:lowest!==null&&product.ownPriceCents!==null?product.ownPriceCents-lowest:null,targetHit:lowest!==null&&product.targetCents!=null&&lowest<=product.targetCents};
+  return {lowest,confirmed:offers.length,pending:latest?latest.offers.filter(o=>o.eligible&&!latest.accepted.includes(o.key)).length:0,changes,comparable,targetHit:lowest!==null&&product.targetCents!=null&&lowest<=product.targetCents};
 }
-export function ownPrice(value,label='Your price') {
+export function ownPrice(value,label='Your target price') {
   if(value===null||value===undefined||value==='')return null;
   if(typeof value!=='number'||!Number.isFinite(value)||value<=0||value>10000000)throw Error(`${label} must be a positive amount.`);
   return Math.round(value*100);

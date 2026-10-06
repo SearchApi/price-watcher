@@ -15,7 +15,7 @@ async function setup(t,{notifier}){
   const store=createStore({path:join(dir,'state.json'),notifier,clock:()=>time,provider:async p=>structuredClone(p.engine==='google_shopping'?searchFixture:detail)});
   let s=await store.get();s=await store.act({action:'search',query:'StudioMouse Pro',revision:s.revision});const search=s.searches.at(-1);
   s=await store.act({action:'inspect',searchId:search.id,candidateId:search.candidates[0].id,revision:s.revision});const d=s.drafts.at(-1);
-  s=await store.act({action:'watch',draftId:d.id,variant:'Black',confirmed:true,accepted:[d.offers[0].key],ownPrice:95,revision:s.revision});
+  s=await store.act({action:'watch',draftId:d.id,variant:'Black',accepted:[d.offers[0].key],revision:s.revision});
   return {store,id:s.products[0].id,set time(v){time=v;},set detail(v){detail=v;},get revision(){return store.get().then(x=>x.revision);}};
 }
 const fake=(status=200,log=[])=>({log,fetcher:async(url,init)=>{log.push({url,init});return {ok:status<400,status,json:async()=>({message:'domain not verified'})};}});
@@ -30,15 +30,14 @@ test('notifier posts one email to Resend with a bearer key',async()=>{
   assert.equal(f.log[0].url,'https://api.resend.com/emails');assert.equal(f.log[0].init.headers.Authorization,'Bearer re_SECRET_TEST_KEY');
   const body=JSON.parse(f.log[0].init.body);assert.deepEqual(body.to,['gabs@example.com']);assert.match(body.from,/onboarding@resend\.dev/);
 });
-test('an alert needs a real change or a new undercut, and escapes product text',async t=>{
+test('an alert needs a real change, and escapes product text',async t=>{
   const f=await setup(t,{notifier:null});let s=await f.store.get(),p=s.products[0];
   assert.equal(describeAlert(p),null);
   const snap=(price)=>({...p.snapshots[0],id:'n',capturedAt:'2026-09-29T12:00:00Z',offers:[{...p.snapshots[0].offers[0],priceCents:price}]});
   assert.equal(describeAlert({...p,snapshots:[p.snapshots[0],snap(9900)]}),null);
-  const drop=describeAlert({...p,title:'<b>Mouse</b>',ownPriceCents:null,snapshots:[p.snapshots[0],snap(8900)]});
+  const drop=describeAlert({...p,title:'<b>Mouse</b>',snapshots:[p.snapshots[0],snap(8900)]});
   assert.match(drop.text,/\$99\.00 → \$89\.00 \(down \$10\.00\)/);assert.doesNotMatch(drop.html,/<b>Mouse/);assert.match(drop.subject,/price change/);
-  const under=describeAlert({...p,ownPriceCents:9950,snapshots:[{...p.snapshots[0]},snap(9900)].map((x,i)=>i?x:{...x,offers:[{...x.offers[0],priceCents:9950}]})});
-  assert.match(under.subject,/undercut/);assert.match(under.text,/above the lowest confirmed offer by \$0\.50/);
+  assert.equal(describeAlert({...p,snapshots:[p.snapshots[0],{...snap(9900),offers:[]}]}),null);
 });
 test('a refresh with a price drop sends one email; an unchanged refresh and disabled alerts send none',async t=>{
   const f=fake(),notifier=createNotifier({env,fetcher:f.fetcher}),h=await setup(t,{notifier});
@@ -64,8 +63,8 @@ test('test email works only when configured',async t=>{
 });
 test('target price: saved with the product, validated, hit once, and emailed once',async t=>{
   const f=fake(),h=await setup(t,{notifier:createNotifier({env,fetcher:f.fetcher})});
-  await assert.rejects(h.store.act({action:'price',id:h.id,ownPrice:95,target:-1,revision:await h.revision}),/target price must be a positive amount/);
-  let s=await h.store.act({action:'price',id:h.id,ownPrice:95,target:90,revision:await h.revision});
+  await assert.rejects(h.store.act({action:'price',id:h.id,target:-1,revision:await h.revision}),/target price must be a positive amount/);
+  let s=await h.store.act({action:'price',id:h.id,target:90,revision:await h.revision});
   assert.equal(s.products[0].targetCents,9000);assert.equal(s.products[0].summary.targetHit,false);
   h.time='2026-09-29T12:00:00Z';h.detail={...detailFixture,offers:[offer('Example Electronics',89)]};
   s=await h.store.act({action:'refresh',id:h.id,revision:await h.revision});await tick();
@@ -73,5 +72,5 @@ test('target price: saved with the product, validated, hit once, and emailed onc
   const mail=JSON.parse(f.log[0].init.body);assert.match(mail.subject,/target price reached/);assert.match(mail.text,/Target reached: the lowest confirmed offer is \$89\.00, at or below your target of \$90\.00/);
   h.time='2026-09-30T12:00:00Z';h.detail={...detailFixture,offers:[offer('Example Electronics',89)]};
   await h.store.act({action:'refresh',id:h.id,revision:await h.revision});await tick();assert.equal(f.log.length,1);
-  s=await h.store.act({action:'price',id:h.id,ownPrice:95,target:null,revision:await h.revision});assert.equal(s.products[0].targetCents,null);assert.equal(s.products[0].summary.targetHit,false);
+  s=await h.store.act({action:'price',id:h.id,target:null,revision:await h.revision});assert.equal(s.products[0].targetCents,null);assert.equal(s.products[0].summary.targetHit,false);
 });

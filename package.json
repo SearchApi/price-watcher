@@ -8,6 +8,9 @@
   },
   "scripts": {
     "start": "node --env-file-if-exists=.env server.mjs",
+    "demo": "PRICE_WATCH_DEMO=on node --env-file-if-exists=.env server.mjs",
+    "demo:reset": "node simulate.mjs --reset",
+    "demo:fresh": "node simulate.mjs --reset && PRICE_WATCH_DEMO=on PRICE_WATCH_DEMO_SEED=empty node --env-file-if-exists=.env server.mjs",
     "test": "node --test tests/*.test.mjs"
   }
 }

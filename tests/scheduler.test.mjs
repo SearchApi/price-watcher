@@ -15,7 +15,7 @@ async function setup(t,{env={},account}={}){
   const scheduler=createScheduler({store,limits,now:()=>time});
   let s=await store.get();s=await store.act({action:'search',query:'StudioMouse Pro',revision:s.revision});
   const search=s.searches.at(-1);s=await store.act({action:'inspect',searchId:search.id,candidateId:search.candidates[0].id,revision:s.revision});
-  const d=s.drafts.at(-1);await store.act({action:'watch',draftId:d.id,variant:'Black',confirmed:true,accepted:[d.offers[0].key],revision:s.revision});
+  const d=s.drafts.at(-1);await store.act({action:'watch',draftId:d.id,variant:'Black',accepted:[d.offers[0].key],revision:s.revision});
   return {store,scheduler,limits,get calls(){return calls;},get time(){return time;},set time(v){time=v;},set failure(v){failure=v;},set detail(v){detail=v;}};
 }
 test('limits read from the environment, fall back on invalid values',()=>{
@@ -60,5 +60,14 @@ test('product limit follows the configured value',async t=>{
   const f=await setup(t,{env:{PRICE_WATCH_MAX_PRODUCTS:'1'}});
   let s=await f.store.get();s=await f.store.act({action:'search',query:'Another model',revision:s.revision});const search=s.searches.at(-1);
   s=await f.store.act({action:'inspect',searchId:search.id,candidateId:search.candidates[0].id,revision:s.revision});
-  await assert.rejects(f.store.act({action:'watch',draftId:s.drafts.at(-1).id,variant:'x',confirmed:true,accepted:[],revision:s.revision}),/holds 1 products/);
+  await assert.rejects(f.store.act({action:'watch',draftId:s.drafts.at(-1).id,variant:'x',accepted:[],revision:s.revision}),/holds 1 products/);
+});
+test('the check interval is a saved setting: it drives the schedule and the usage estimate',async t=>{
+  const account=async()=>({account:{current_month_usage:0,monthly_allowance:100,remaining_credits:96},api_usage:{hourly_rate_limit:100}});
+  const f=await setup(t,{account});let s=await f.store.get();assert.equal(s.checkHours,24);
+  await assert.rejects(f.store.act({action:'interval',hours:0,revision:s.revision}),/between 1 hour/);
+  s=await f.store.act({action:'interval',hours:1,revision:s.revision});assert.equal(s.checkHours,1);assert.match(s.message,/every hour/);
+  assert.equal((await f.store.usage()).estimate.perDay,48);assert.equal((await f.scheduler.status()).everyHours,1);
+  f.time=T0+30*60000;assert.equal(await f.scheduler.tick(),null);
+  f.time=T0+H+1000;assert.ok((await f.scheduler.tick()).checked);
 });

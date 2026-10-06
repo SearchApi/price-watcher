@@ -6,7 +6,11 @@ import {createStore} from './store.mjs';
 import {createScheduler} from './scheduler.mjs';
 import {readLimits} from './config.mjs';
 import {createNotifier} from './notify.mjs';
-const limits=readLimits(),notifier=createNotifier(),store=createStore({limits,notifier,appUrl:`http://127.0.0.1:${process.env.PORT||5192}/`}),scheduler=createScheduler({store,limits,log:m=>console.log('Price Watch auto-check:',m)});
+import {seedDemo} from './simulate.mjs';
+// Demo mode (npm run demo) works on its own copy of the workspace, on its own port, and runs no scheduler.
+const demo=process.env.PRICE_WATCH_DEMO==='on',port=Number(process.env.PORT||(demo?5194:5192)),realPath=resolve(import.meta.dirname,'private/state.json'),demoPath=resolve(import.meta.dirname,'private/demo-state.json');
+if(demo)await seedDemo(realPath,demoPath,{empty:process.env.PRICE_WATCH_DEMO_SEED==='empty'});
+const limits=readLimits(),notifier=createNotifier(),store=createStore({limits,notifier,demo,path:demo?demoPath:realPath,appUrl:`http://127.0.0.1:${port}/`}),scheduler=demo?null:createScheduler({store,limits,log:m=>console.log('Price Watch auto-check:',m)});
 const root=resolve(import.meta.dirname,'public'),api=createHandler({store,scheduler});
 const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml'};
 export async function handler(req,res){
@@ -21,4 +25,4 @@ export async function handler(req,res){
     const content=await readFile(file);res.writeHead(200,{'Content-Type':mime[extname(file)]||'application/octet-stream'});res.end(req.method==='HEAD'?undefined:content);
   }catch{res.writeHead(404);res.end('Not found');}
 }
-if(process.argv[1]&&resolve(process.argv[1])===import.meta.filename)http.createServer(handler).listen(Number(process.env.PORT||5192),'127.0.0.1',()=>{console.log(`Price Watch: http://127.0.0.1:${process.env.PORT||5192}/`);scheduler.start();});
+if(process.argv[1]&&resolve(process.argv[1])===import.meta.filename)http.createServer(handler).listen(port,'127.0.0.1',()=>{console.log(`Price Watch${demo?' (demo mode, simulated checks)':''}: http://127.0.0.1:${port}/`);scheduler?.start();});
