@@ -72,7 +72,7 @@ Target reached, and the email lands. With real data, it’s the same two API cal
 
 The full build is on the channel.
 
-*Spoken words: about 125, roughly 55 seconds.*
+*Spoken words: about 120, roughly 50 seconds.*
 
 ## Do not
 
